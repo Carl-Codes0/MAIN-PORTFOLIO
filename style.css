@@ -97,6 +97,7 @@ nav {
   padding: 8px 18px;
   border-radius: 100px;
   font-weight: 600;
+  border: none;
 }
 
 .nav-cta:hover { opacity: 0.88; }
@@ -163,6 +164,82 @@ section + section {
   grid-template-columns: 1.3fr 1fr;
   gap: 48px;
   align-items: center;
+}
+
+.contact-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: .3s ease;
+    z-index: 9999;
+}
+.contact-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.contact-box {
+    width: min(500px, 92%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 30px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    border: none;
+    background: transparent;
+    font-size: 30px;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.contact-box h2{
+    margin-bottom:10px;
+}
+
+.contact-box p{
+    margin-bottom:25px;
+}
+
+.contact-box input,
+.contact-box textarea{
+    width:100%;
+    padding:15px;
+    margin-bottom:18px;
+
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface-alt);
+    color:var(--text);
+
+    font:inherit;
+}
+
+.contact-box textarea{
+    resize:vertical;
+    min-height:140px;
+}
+
+.submit-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    background:var(--accent);
+    color:white;
+    font-size:16px;
+    font-weight:600;
 }
 
 .hero-eyebrow {
