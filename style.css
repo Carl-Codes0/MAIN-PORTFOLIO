@@ -563,3 +563,33 @@ footer { border-top: 1px solid var(--border); padding: 44px 0 32px; }
     display: block ;
   }
 }
+
+
+#contactForm .h-captcha {
+    margin: 16px 0;
+    max-width: 100%;
+}
+
+#contactStatus {
+    margin: 12px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#contactStatus:empty {
+    display: none;
+}
+
+#contactStatus.success {
+    color: #16803c;
+}
+
+#contactStatus.error {
+    color: #d32f2f;
+}
+
+#contactForm .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}

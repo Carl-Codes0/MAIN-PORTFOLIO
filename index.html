@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carl James Avenido — Web Developer</title>
+<title>Carl James Avenido - Web Developer</title>
 
 <meta name="description" content="Carl James Avenido — Full-Stack Developer based in Cebu, Philippines. React, Node.js and cloud-native application development.">
 <meta name="keywords" content="Full-Stack Developer, Portfolio, React, Node.js, TypeScript, Cebu">
@@ -15,51 +15,79 @@
 <link rel="icon" type="image/png" href="images/carl-logo-light.png">
 </head>
 <body>
-   <div class="contact-modal" id="contactModal">
-
+ 
+<div class="contact-modal" id="contactModal">
     <div class="contact-box">
 
-        <button class="close-modal" id="closeContact">&times;</button>
+        <button class="close-modal" id="closeContact"
+                type="button" aria-label="Close contact form">
+            &times;
+        </button>
 
         <h2>Let's Work Together</h2>
-
         <p>Have a project in mind? Send me a message.</p>
 
-        <form action="https://api.web3forms.com/submit" method="POST">
-            <input
-                type="hidden"
-                name="access_key"
-                value="be90b351-0f09-4a15-89d7-f916d3c612a8"
-            >
-            <input
-                type="hidden"
-                name="subject"
-                value="New Portfolio Inquiry"
-            >
-            <input
-                type="text"
-                name="name"
-                placeholder="Your Name"
-                required
-            >
-            <input
-                type="email"
-                name="email"
-                placeholder="Your Email"
-                required
-            >
-            <textarea
-                name="message"
-                rows="6"
-                placeholder="Tell me about your project..."
-                required
-            ></textarea>
-            <button class="submit-btn" type="submit">
+        <form id="contactForm"
+              action="https://api.web3forms.com/submit"
+              method="POST">
+
+            <input type="hidden"
+                   name="access_key"
+                   value="be90b351-0f09-4a15-89d7-f916d3c612a8">
+
+            <input type="hidden"
+                   name="subject"
+                   value="New Portfolio Inquiry">
+
+            <!-- Honeypot -->
+            <input type="checkbox"
+                   name="botcheck"
+                   tabindex="-1"
+                   autocomplete="off"
+                   style="display:none">
+
+            <input type="text"
+                   name="name"
+                   placeholder="Your Name"
+                   minlength="2"
+                   maxlength="100"
+                   autocomplete="name"
+                   required>
+
+            <input type="email"
+                   name="email"
+                   placeholder="Your Email"
+                   maxlength="254"
+                   autocomplete="email"
+                   required>
+
+            <textarea name="message"
+                      rows="6"
+                      placeholder="Tell me about your project..."
+                      minlength="10"
+                      maxlength="3000"
+                      required></textarea>
+
+            <!-- CAPTCHA -->
+            <div class="h-captcha"
+                 data-captcha="true"></div>
+
+            <p id="contactStatus"
+               role="status"
+               aria-live="polite"></p>
+
+            <button class="submit-btn"
+                    type="submit">
                 Send Message
             </button>
+
         </form>
     </div>
 </div>
+
+<script src="https://web3forms.com/client/script.js"
+        async defer></script>
+
 
 <nav class="container">
 <a class="nav-logo" href="#">
@@ -555,6 +583,157 @@ contactModal.addEventListener("click", (e) => {
     if (e.target === contactModal) {
         contactModal.classList.remove("show");
     }
+});
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("contactForm");
+    if (!form) return;
+
+    const button = form.querySelector(".submit-btn");
+    const status = document.getElementById("contactStatus");
+
+    const MIN_TIME = 3000;
+    const COOLDOWN = 60000;
+    const STORAGE_KEY = "portfolio_contact_last_sent";
+
+    let startedAt = Date.now();
+    let submitting = false;
+
+    function showMessage(message, success = false) {
+        status.textContent = message;
+        status.classList.toggle("success", success);
+        status.classList.toggle("error", !success);
+    }
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        if (submitting) return;
+
+        const now = Date.now();
+        const name = form.elements.namedItem("name").value.trim();
+        const email = form.elements.namedItem("email").value.trim();
+        const message = form.elements.namedItem("message").value.trim();
+        const botcheck = form.elements.namedItem("botcheck");
+
+        // Honeypot check
+        if (botcheck.checked) {
+            showMessage("Submission rejected.");
+            return;
+        }
+
+        // Minimum completion time
+        if (now - startedAt < MIN_TIME) {
+            showMessage("Please review your message and try again.");
+            return;
+        }
+
+        // Local submission cooldown
+        let lastSent = 0;
+
+        try {
+            lastSent = Number(
+                localStorage.getItem(STORAGE_KEY) || 0
+            );
+        } catch (error) {
+            // Storage may be unavailable.
+        }
+
+        if (now - lastSent < COOLDOWN) {
+            showMessage(
+                "Please wait one minute before sending another message."
+            );
+            return;
+        }
+
+        // Additional validation
+        if (
+            name.length < 2 ||
+            name.length > 100 ||
+            email.length > 254 ||
+            message.length < 10 ||
+            message.length > 3000
+        ) {
+            showMessage("Please provide valid information.");
+            return;
+        }
+
+        if (!form.reportValidity()) return;
+
+        // Check hCaptcha
+        const captchaField = form.querySelector(
+            '[name="h-captcha-response"]'
+        );
+
+        if (!captchaField || !captchaField.value) {
+            showMessage("Please complete the CAPTCHA verification.");
+            return;
+        }
+
+        submitting = true;
+        button.disabled = true;
+        button.textContent = "Sending...";
+        showMessage("");
+
+        try {
+            const formData = new FormData(form);
+
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    Accept: "application/json"
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    response.status === 429
+                        ? "Too many requests. Please try again later."
+                        : "Unable to send your message. Please try again."
+                );
+            }
+
+            try {
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    String(Date.now())
+                );
+            } catch (error) {
+                // Submission succeeded even if storage is blocked.
+            }
+
+            showMessage(
+                "Thank you! Your message has been sent successfully.",
+                true
+            );
+
+            form.reset();
+            startedAt = Date.now();
+
+            if (window.hcaptcha) {
+                window.hcaptcha.reset();
+            }
+
+        } catch (error) {
+            showMessage(
+                error.message ||
+                "Something went wrong. Please try again."
+            );
+
+            if (window.hcaptcha) {
+                window.hcaptcha.reset();
+            }
+
+        } finally {
+            submitting = false;
+            button.disabled = false;
+            button.textContent = "Send Message";
+        }
+    });
 });
 
 </script>
